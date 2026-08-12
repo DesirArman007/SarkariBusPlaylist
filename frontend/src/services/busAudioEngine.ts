@@ -1,4 +1,5 @@
 // Web Audio API Bus Sound Synthesizer & Music Engine
+import { resolveUploadUrl } from '../config/api';
 
 class BusAudioEngine {
   private audioCtx: AudioContext | null = null;
@@ -107,7 +108,7 @@ class BusAudioEngine {
     if (this.musicAudioElement) {
       let targetUrl = audioUrl;
       if (audioUrl && audioUrl.startsWith('/uploads')) {
-        targetUrl = window.location.origin + audioUrl;
+        targetUrl = resolveUploadUrl(audioUrl);
       }
 
       this.musicAudioElement.src = targetUrl;
