@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ListMusic, Music, MoreVertical } from 'lucide-react';
 import { audioEngine } from '../services/busAudioEngine';
+import { resolveUploadUrl } from '../config/api';
 
 export interface Track {
   id: string;
@@ -202,7 +203,7 @@ export const CassettePlayer: React.FC<CassettePlayerProps> = ({
           {/* 1. LEFT SQUARE ALBUM COVER PHOTO */}
           <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-xl sm:rounded-2xl bg-[#180c0d] overflow-hidden shrink-0 shadow-lg border border-[#3e1f20] relative">
             {currentTrack.coverUrl ? (
-              <img src={currentTrack.coverUrl} alt="Album Art" className="w-full h-full object-cover" />
+              <img src={resolveUploadUrl(currentTrack.coverUrl)} alt="Album Art" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-tr from-amber-900 via-red-950 to-stone-900 flex items-center justify-center p-2">
                 <div className="text-center text-amber-200">

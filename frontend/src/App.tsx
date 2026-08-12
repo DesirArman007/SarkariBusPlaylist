@@ -7,7 +7,7 @@ import { AdminDashboardModal } from './components/AdminDashboardModal';
 import { audioEngine } from './services/busAudioEngine';
 import { Volume2, Users } from 'lucide-react';
 import { io } from 'socket.io-client';
-import { API_BASE } from './config/api';
+import { API_BASE, resolveUploadUrl } from './config/api';
 
 const GithubIcon = () => (
   <svg className="w-3.5 h-3.5 fill-current text-amber-400 group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24">
@@ -106,6 +106,14 @@ export default function App() {
         } else if (data.playlists && Array.isArray(data.playlists) && data.playlists.length > 0) {
           fetchedTracks = data.playlists.flatMap((p: Playlist) => p.tracks || []);
         }
+
+        // Resolve relative /uploads/... paths to absolute backend URLs
+        // (needed when frontend is on Vercel and files are stored on Render)
+        fetchedTracks = fetchedTracks.map(tr => ({
+          ...tr,
+          audioUrl: resolveUploadUrl(tr.audioUrl),
+          coverUrl: tr.coverUrl ? resolveUploadUrl(tr.coverUrl) : tr.coverUrl,
+        }));
 
         const finalTracks = fetchedTracks.length > 0 ? fetchedTracks : FALLBACK_TRACKS;
 
