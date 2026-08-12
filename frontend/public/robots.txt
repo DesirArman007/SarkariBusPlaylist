@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/admin/
+
+# Sitemap
+Sitemap: https://bus-playlist.vercel.app/sitemap.xml

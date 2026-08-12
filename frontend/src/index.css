@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Rozha+One&family=Share+Tech+Mono&family=Outfit:wght@300;400;600;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  font-family: 'Outfit', system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #0b0f19;
+  user-select: none;
+}
+
+.font-devnagari {
+  font-family: 'Rozha One', serif, sans-serif;
+}
+
+.font-digital {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(18, 26, 44, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-dark {
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
