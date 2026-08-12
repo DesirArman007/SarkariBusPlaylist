@@ -561,9 +561,14 @@ app.delete('/api/admin/requests/:id', adminActionLimiter, adminAuthMiddleware, a
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: (origin, callback) => callback(null, true),
-    methods: ['GET', 'POST']
-  }
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  allowEIO3: true,          // backward compatibility
+  pingTimeout: 60000,       // 60s — prevent premature disconnect on Render
+  pingInterval: 25000,      // 25s — keep connection alive
+  transports: ['polling', 'websocket']  // match client transport order
 });
 
 let connectedPassengersCount = 0;

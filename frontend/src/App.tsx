@@ -65,9 +65,10 @@ export default function App() {
   // Connect Socket.io for real-time live passenger count
   useEffect(() => {
     const socket = io(API_BASE, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],  // polling first - required for Render free tier proxy
       reconnectionAttempts: 10,
-      timeout: 10000
+      timeout: 10000,
+      upgrade: true   // upgrade from polling to websocket once connection is stable
     });
 
     socket.on('live-passengers-count', (count: number) => {
