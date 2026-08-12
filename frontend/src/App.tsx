@@ -7,6 +7,7 @@ import { AdminDashboardModal } from './components/AdminDashboardModal';
 import { audioEngine } from './services/busAudioEngine';
 import { Volume2, Users } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { API_BASE } from './config/api';
 
 const GithubIcon = () => (
   <svg className="w-3.5 h-3.5 fill-current text-amber-400 group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24">
@@ -63,7 +64,7 @@ export default function App() {
 
   // Connect Socket.io for real-time live passenger count
   useEffect(() => {
-    const socket = io({
+    const socket = io(API_BASE, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 10,
       timeout: 10000
@@ -75,7 +76,7 @@ export default function App() {
       }
     });
 
-    fetch('/api/live-passengers')
+    fetch(`${API_BASE}/api/live-passengers`)
       .then(res => res.json())
       .then(data => {
         if (data && typeof data.count === 'number') {
@@ -94,7 +95,7 @@ export default function App() {
 
   // Fetch backend API - parse songs from DB
   const fetchSongs = () => {
-    fetch('/api/songs')
+    fetch(`${API_BASE}/api/songs`)
       .then(res => res.json())
       .then(data => {
         let fetchedTracks: Track[] = [];

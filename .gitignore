@@ -9,6 +9,9 @@ frontend/node_modules/
 .env
 *.env
 backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.production
 
 # Uploads
 backend/uploads/*

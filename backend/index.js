@@ -21,7 +21,19 @@ const PORT = process.env.PORT || 5000;
 
 // Security: Helmet sets standard HTTP security headers (CSP, X-Frame-Options, HSTS, etc.)
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" } // Allow audio/image loading
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow audio/image loading
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      mediaSrc: ["'self'", "blob:", "https:"],  // Allow audio/video from CDNs
+      connectSrc: ["'self'", "wss:", "ws:", "https:"], // Allow WebSocket + API calls
+      workerSrc: ["'self'", "blob:"],
+    },
+  },
 }));
 
 // Security: Restrict CORS to known origins only
@@ -31,7 +43,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:5173',
 ];
-// Add production origin from env if set
+// Add production Vercel frontend URL from env
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
@@ -64,6 +76,13 @@ app.use('/uploads', (req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff'); // Security: Prevent MIME sniffing
   next();
 }, express.static(uploadsDir));
+
+// Serve the Vite-built frontend in production
+const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  console.log('🎨 Serving frontend from:', frontendDist);
+}
 
 // Security: File type validation for multer uploads
 const ALLOWED_AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|flac|aac|m4a|wma)$/i;
@@ -563,6 +582,23 @@ io.on('connection', (socket) => {
 app.get('/api/live-passengers', (req, res) => {
   res.json({ success: true, count: Math.max(1, connectedPassengersCount) });
 });
+
+// Health check endpoint — used by Render health checks & UptimeRobot keep-alive pinging
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: '🚌 Sarkari Bus Playlist API',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Catch-all: serve React app for any non-API route (React Router support)
+if (fs.existsSync(frontendDist)) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 // Global error handler for multer file type errors
 app.use((err, req, res, next) => {

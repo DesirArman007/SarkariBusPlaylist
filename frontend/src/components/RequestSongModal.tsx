@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Send, Music, User, MessageSquare, X } from 'lucide-react';
 import type { SongRequestItem } from './DashboardClock';
+import { API_BASE } from '../config/api';
 
 interface RequestSongModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ export const RequestSongModal: React.FC<RequestSongModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/requests', {
+      const res = await fetch(`${API_BASE}/api/requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

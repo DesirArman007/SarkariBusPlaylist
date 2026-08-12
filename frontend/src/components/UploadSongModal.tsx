@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Music, Image as ImageIcon, X, CheckCircle, Disc, ShieldCheck, Link as LinkIcon } from 'lucide-react';
 import type { Playlist, Track } from './CassettePlayer';
+import { API_BASE } from '../config/api';
 
 interface UploadSongModalProps {
   isOpen: boolean;
@@ -76,7 +77,7 @@ export const UploadSongModal: React.FC<UploadSongModalProps> = ({
       }
 
       // Restricted Admin Endpoint
-      const response = await fetch('/api/admin/upload-song', {
+      const response = await fetch(`${API_BASE}/api/admin/upload-song`, {
         method: 'POST',
         headers: {
           'x-admin-key': adminKey.trim()

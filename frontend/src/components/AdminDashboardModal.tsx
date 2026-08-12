@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, Upload, Trash2, X, Music, Image as ImageIcon, CheckCircle, Disc, LogOut, Link as LinkIcon, MessageSquare, Radio } from 'lucide-react';
 import type { Playlist, Track } from './CassettePlayer';
+import { API_BASE } from '../config/api';
 
 interface AdminDashboardModalProps {
   isOpen: boolean;
@@ -73,7 +74,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     setAdminPasscode(''); // Clear the input field only
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: currentPasscode })
@@ -134,7 +135,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
         if (directCoverUrl.trim()) formData.append('directCoverUrl', directCoverUrl.trim());
       }
 
-      const response = await fetch('/api/admin/upload-song', {
+      const response = await fetch(`${API_BASE}/api/admin/upload-song`, {
         method: 'POST',
         headers: {
           'x-admin-key': adminKey
@@ -183,7 +184,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   const handleDeleteSong = async (trackId: string) => {
     if (!window.confirm("Are you sure you want to delete this song from DB?")) return;
     try {
-      const res = await fetch(`/api/admin/songs/${trackId}`, {
+      const res = await fetch(`${API_BASE}/api/admin/songs/${trackId}`, {
         method: 'DELETE',
         headers: {
           'x-admin-key': adminKey
@@ -202,7 +203,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
   const fetchAdminRequests = async (key: string) => {
     try {
-      const res = await fetch('/api/requests', {
+      const res = await fetch(`${API_BASE}/api/requests`, {
         headers: { 'x-admin-key': key }
       });
       if (res.ok) {
@@ -216,7 +217,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
   const handleDeleteRequest = async (reqId: number) => {
     try {
-      const res = await fetch(`/api/admin/requests/${reqId}`, {
+      const res = await fetch(`${API_BASE}/api/admin/requests/${reqId}`, {
         method: 'DELETE',
         headers: { 'x-admin-key': adminKey }
       });
