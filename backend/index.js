@@ -49,10 +49,25 @@ if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
+// Regex to match Vercel preview deployment URLs for this project
+// e.g. https://sarkari-bus-playlist-abc123xyz.vercel.app
+const vercelPreviewRegex = /^https:\/\/sarkari-bus-playlist(-[a-z0-9]+)*\.vercel\.app$/;
+
+/**
+ * Check if an origin is allowed by the CORS policy.
+ * Accepts exact matches from the allowedOrigins list and
+ * any Vercel preview deployment URL matching the project pattern.
+ */
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // No origin (mobile apps, curl, Postman)
+  if (allowedOrigins.includes(origin)) return true;
+  if (vercelPreviewRegex.test(origin)) return true;
+  return false;
+};
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman in dev)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -561,7 +576,13 @@ app.delete('/api/admin/requests/:id', adminActionLimiter, adminAuthMiddleware, a
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
     credentials: true
   },
