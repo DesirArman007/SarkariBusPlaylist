@@ -35,3 +35,7 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Scripts & Migration
+backend/scripts/migrate_to_cloudinary.js
+

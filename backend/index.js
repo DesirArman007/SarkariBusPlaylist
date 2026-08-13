@@ -9,6 +9,15 @@ import multer from 'multer';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { neon } from '@neondatabase/serverless';
+import { v2 as cloudinary } from 'cloudinary';
+
+// Cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'desirarman',
+  api_key: process.env.CLOUDINARY_API_KEY || '519887776143113',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'R6u37CXBF5_7HJjsSWzgKXpdo78',
+  secure: true
+});
 
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -477,7 +486,20 @@ app.post('/api/admin/upload-song', adminActionLimiter, adminAuthMiddleware, uplo
 
     let audioUrl = directAudioUrl ? directAudioUrl.trim() : null;
     if (req.files && req.files['songFile'] && req.files['songFile'].length > 0) {
-      audioUrl = `/uploads/${req.files['songFile'][0].filename}`;
+      const localAudioFile = req.files['songFile'][0];
+      try {
+        console.log("☁️ Uploading song file to Cloudinary...", localAudioFile.path);
+        const res = await cloudinary.uploader.upload(localAudioFile.path, {
+          resource_type: 'video', // Audio files are uploaded under video resource type in Cloudinary
+          folder: 'bus_playlist/audio',
+          public_id: `audio_${Date.now()}`
+        });
+        audioUrl = res.secure_url;
+        console.log("✅ Song uploaded to Cloudinary:", audioUrl);
+      } catch (uploadErr) {
+        console.error("⚠️ Cloudinary audio upload failed, falling back to local URL:", uploadErr);
+        audioUrl = `/uploads/${localAudioFile.filename}`;
+      }
     }
 
     if (!title || !audioUrl) {
@@ -486,7 +508,20 @@ app.post('/api/admin/upload-song', adminActionLimiter, adminAuthMiddleware, uplo
 
     let coverUrl = directCoverUrl ? directCoverUrl.trim() : null;
     if (req.files && req.files['coverFile'] && req.files['coverFile'].length > 0) {
-      coverUrl = `/uploads/${req.files['coverFile'][0].filename}`;
+      const localCoverFile = req.files['coverFile'][0];
+      try {
+        console.log("☁️ Uploading cover image to Cloudinary...", localCoverFile.path);
+        const res = await cloudinary.uploader.upload(localCoverFile.path, {
+          resource_type: 'image',
+          folder: 'bus_playlist/covers',
+          public_id: `cover_${Date.now()}`
+        });
+        coverUrl = res.secure_url;
+        console.log("✅ Cover image uploaded to Cloudinary:", coverUrl);
+      } catch (uploadErr) {
+        console.error("⚠️ Cloudinary cover upload failed, falling back to local URL:", uploadErr);
+        coverUrl = `/uploads/${localCoverFile.filename}`;
+      }
     }
 
     const targetPlaylistId = playlistId || "90s-golden";
