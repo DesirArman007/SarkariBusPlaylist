@@ -24,6 +24,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// Trust reverse proxy (e.g., Render, Heroku, Nginx) so rate limiter accurately tracks client IPs
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 5000;
 
 app.use(helmet({
