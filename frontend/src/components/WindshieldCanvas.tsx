@@ -64,7 +64,6 @@ export const WindshieldCanvas: React.FC<WindshieldCanvasProps> = ({ isPlaying = 
       const activeDesktop = activeVidIndex === 0 ? desktopVidA.current : desktopVidB.current;
       const inactiveDesktop = activeVidIndex === 0 ? desktopVidB.current : desktopVidA.current;
 
-      const activeMobile = activeVidIndex === 0 ? mobileVidA.current : mobileVidB.current;
       const inactiveMobile = activeVidIndex === 0 ? mobileVidB.current : mobileVidA.current;
 
       if (!activeDesktop || !inactiveDesktop) {

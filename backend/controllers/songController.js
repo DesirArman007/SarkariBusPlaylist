@@ -6,7 +6,7 @@ export const getSongs = async (req, res) => {
   try {
     if (sql) {
       const plRows = await sql`SELECT * FROM playlists`;
-      const trRows = await sql`SELECT * FROM tracks ORDER BY id DESC`;
+      const trRows = await sql`SELECT * FROM tracks ORDER BY is_default DESC, id DESC`;
 
       const allTracks = trRows.map(tr => ({
         id: tr.id,
@@ -142,5 +142,20 @@ export const deleteSong = async (req, res) => {
   } catch (err) {
     console.error("Error deleting song:", err);
     res.status(500).json({ error: "Failed to delete song. Please try again later." });
+  }
+};
+
+export const setDefaultSong = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (sql) {
+      await sql`UPDATE tracks SET is_default = false`;
+      await sql`UPDATE tracks SET is_default = true WHERE id = ${id}`;
+    }
+    console.log("Admin set default song ID:", id);
+    res.json({ success: true, message: "Song set as default successfully!" });
+  } catch (err) {
+    console.error("Error setting default song:", err);
+    res.status(500).json({ error: "Failed to set default song. Please try again later." });
   }
 };

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getSongs, uploadSong, deleteSong } from '../controllers/songController.js';
+import { getSongs, uploadSong, deleteSong, setDefaultSong } from '../controllers/songController.js';
 import { adminAuthMiddleware } from '../middlewares/auth.js';
 import { upload } from '../middlewares/upload.js';
 import { adminActionLimiter } from '../middlewares/rateLimiter.js';
@@ -20,5 +20,6 @@ router.post(
 );
 
 router.delete('/admin/songs/:id', adminActionLimiter, adminAuthMiddleware, deleteSong);
+router.put('/admin/songs/:id/default', adminActionLimiter, adminAuthMiddleware, setDefaultSong);
 
 export default router;

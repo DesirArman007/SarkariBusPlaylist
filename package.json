@@ -4,7 +4,7 @@
   "description": "Indian State Bus Retro Songs Vibe Web Application Monorepo",
   "main": "index.js",
   "scripts": {
-    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "build": "cd backend && npm install && cd ../frontend && npm install && npm run build",
     "start": "node backend/index.js",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm --prefix backend run dev",

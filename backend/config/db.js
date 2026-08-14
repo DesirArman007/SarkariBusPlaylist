@@ -41,6 +41,12 @@ async function initDatabase() {
       );
     `;
 
+    try {
+      await sql`ALTER TABLE tracks ADD COLUMN is_default BOOLEAN DEFAULT false`;
+    } catch (err) {
+      // Column might already exist, ignore error
+    }
+
     await sql`
       CREATE TABLE IF NOT EXISTS bus_routes (
         id TEXT PRIMARY KEY,

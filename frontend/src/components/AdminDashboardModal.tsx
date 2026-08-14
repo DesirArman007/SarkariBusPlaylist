@@ -201,6 +201,27 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     }
   };
 
+  const handleSetDefaultSong = async (trackId: string, trackTitle: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/songs/${trackId}/default`, {
+        method: 'PUT',
+        headers: {
+          'x-admin-key': adminKey
+        }
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to set default song');
+      }
+      setSuccessMsg(`✅ "${trackTitle}" set as the default startup song!`);
+      // Since App.tsx fetches on load, to update current UI we might need to notify App
+      // But just showing success is fine, the user has to refresh or we trigger a refetch.
+      if (onSongDeleted) onSongDeleted(trackId); // HACK: reusing onSongDeleted to trigger a refetch in App.tsx
+    } catch (err) {
+      setErrorMsg((err as Error).message);
+    }
+  };
+
   const fetchAdminRequests = async (key: string) => {
     try {
       const res = await fetch(`${API_BASE}/api/requests`, {
@@ -234,7 +255,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
   const handleAcceptRequest = async (reqId: number, trackName: string) => {
     try {
-      const res = await fetch(`/api/admin/requests/${reqId}`, {
+      const res = await fetch(`${API_BASE}/api/admin/requests/${reqId}`, {
         method: 'DELETE',
         headers: { 'x-admin-key': adminKey }
       });
@@ -560,13 +581,22 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                         <div className="text-[10px] text-slate-400 truncate">{tr.artist} {tr.movie ? `• ${tr.movie}` : ''}</div>
                       </div>
 
-                      <button
-                        onClick={() => handleDeleteSong(tr.id)}
-                        className="p-1.5 bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-400 rounded-lg transition-colors shrink-0 cursor-pointer"
-                        title="Delete Song"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleSetDefaultSong(tr.id, tr.title)}
+                          className="p-1.5 bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-400 rounded-lg transition-colors cursor-pointer"
+                          title="Set as Default Startup Song"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSong(tr.id)}
+                          className="p-1.5 bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-400 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Song"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
