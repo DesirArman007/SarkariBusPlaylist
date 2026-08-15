@@ -5,7 +5,7 @@ import { CassettePlayer, type Playlist, type Track } from './components/Cassette
 import { RequestSongModal } from './components/RequestSongModal';
 import { AdminDashboardModal } from './components/AdminDashboardModal';
 import { audioEngine } from './services/busAudioEngine';
-import { Volume2, Users } from 'lucide-react';
+import { Volume2, Users, Eye } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { API_BASE, resolveUploadUrl } from './config/api';
 
@@ -61,9 +61,26 @@ export default function App() {
 
   // Live Active Passengers Onboard state
   const [livePassengers, setLivePassengers] = useState(1);
+  const [totalVisitors, setTotalVisitors] = useState<number | null>(null);
 
   // Connect Socket.io for real-time live passenger count
   useEffect(() => {
+    const hasVisited = sessionStorage.getItem('hasVisited');
+    if (!hasVisited) {
+      fetch(`${API_BASE}/api/stats/visitors/increment`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          setTotalVisitors(data.count);
+          sessionStorage.setItem('hasVisited', 'true');
+        })
+        .catch(() => {});
+    } else {
+      fetch(`${API_BASE}/api/stats/visitors`)
+        .then(res => res.json())
+        .then(data => setTotalVisitors(data.count))
+        .catch(() => {});
+    }
+
     const socket = io(API_BASE, {
       transports: ['polling', 'websocket'],  // polling first - required for Render free tier proxy
       reconnectionAttempts: 10,
@@ -256,10 +273,10 @@ export default function App() {
         </button>
       </div>
 
-      {/* 4. LIVE ACTIVE PASSENGERS COUNTER — bottom-left on desktop/landscape tablet, top-right on mobile/portrait tablet */}
-      <div className="absolute top-6 right-4 sm:top-8 sm:right-6 md:top-auto md:bottom-7 md:right-auto md:left-7 xl:bottom-10 xl:left-8 z-40 pointer-events-auto">
+      {/* 4. LIVE ACTIVE PASSENGERS COUNTER & TOTAL VISITORS — bottom-left on desktop/landscape tablet, top-right on mobile/portrait tablet */}
+      <div className="absolute top-6 right-4 sm:top-8 sm:right-6 md:top-auto md:bottom-7 md:right-auto md:left-7 xl:bottom-10 xl:left-8 z-40 pointer-events-auto flex flex-col gap-2 items-end md:items-start">
         <div
-          className="bg-slate-950/85 border border-emerald-500/50 text-emerald-300 px-2.5 py-1 sm:px-3 sm:py-1.5 md:px-3.5 md:py-2 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs md:text-xs font-mono font-bold hover:border-emerald-400/80 transition-all"
+          className="bg-slate-950/85 border border-emerald-500/50 text-emerald-300 px-2.5 py-1 sm:px-3 sm:py-1.5 md:px-3.5 md:py-2 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs md:text-xs font-mono font-bold hover:border-emerald-400/80 transition-all w-fit"
           title="Passengers Currently Onboard Live"
         >
           <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
@@ -269,6 +286,16 @@ export default function App() {
           <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
           <span>{livePassengers} {livePassengers === 1 ? 'Passenger' : 'Passengers'} Onboard</span>
         </div>
+
+        {totalVisitors !== null && (
+          <div
+            className="bg-slate-950/85 border border-sky-500/50 text-sky-300 px-2.5 py-1 sm:px-3 sm:py-1.5 md:px-3.5 md:py-2 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs md:text-xs font-mono font-bold hover:border-sky-400/80 transition-all w-fit"
+            title="Passengers Carried"
+          >
+            <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-400 shrink-0" />
+            <span>{totalVisitors.toLocaleString()} Passengers Carried</span>
+          </div>
+        )}
       </div>
 
       {/* 5. DRIVER CABIN OVERLAY */}

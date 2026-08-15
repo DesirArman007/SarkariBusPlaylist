@@ -71,6 +71,19 @@ async function initDatabase() {
       );
     `;
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS site_stats (
+        id TEXT PRIMARY KEY,
+        value INT NOT NULL DEFAULT 0
+      );
+    `;
+
+    await sql`
+      INSERT INTO site_stats (id, value)
+      VALUES ('visitor_count', 0)
+      ON CONFLICT (id) DO NOTHING;
+    `;
+
     console.log("Neon PostgreSQL database schema verified!");
   } catch (err) {
     console.error("Error initializing database schema:", err);
