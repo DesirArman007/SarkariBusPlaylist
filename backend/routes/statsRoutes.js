@@ -3,7 +3,7 @@ import { getVisitorCount, incrementVisitorCount } from '../controllers/statsCont
 
 const router = express.Router();
 
-router.get('/stats/visitors', getVisitorCount);
-router.post('/stats/visitors/increment', incrementVisitorCount);
+router.get('/board/passengers', getVisitorCount);
+router.post('/board/passengers/join', incrementVisitorCount);
 
 export default router;

@@ -67,7 +67,7 @@ export default function App() {
   useEffect(() => {
     const hasVisited = sessionStorage.getItem('hasVisited');
     if (!hasVisited) {
-      fetch(`${API_BASE}/api/stats/visitors/increment`, { method: 'POST' })
+      fetch(`${API_BASE}/api/board/passengers/join`, { method: 'POST' })
         .then(res => res.json())
         .then(data => {
           setTotalVisitors(data.count);
@@ -75,7 +75,7 @@ export default function App() {
         })
         .catch(() => {});
     } else {
-      fetch(`${API_BASE}/api/stats/visitors`)
+      fetch(`${API_BASE}/api/board/passengers`)
         .then(res => res.json())
         .then(data => setTotalVisitors(data.count))
         .catch(() => {});
