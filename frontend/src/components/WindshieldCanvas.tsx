@@ -5,9 +5,17 @@ interface WindshieldCanvasProps {
   timeOfDay?: 'day' | 'sunset' | 'night';
   isPlaying?: boolean;
   hasStarted?: boolean;
+  videoUrl?: string;
+  mobileVideoUrl?: string;
 }
 
-export const WindshieldCanvas: React.FC<WindshieldCanvasProps> = ({ isPlaying = false, hasStarted = false }) => {
+export const WindshieldCanvas: React.FC<WindshieldCanvasProps> = ({
+  isPlaying = false,
+  hasStarted = false,
+  videoUrl = '/bus.mp4',
+  mobileVideoUrl
+}) => {
+  const resolvedMobileVideoUrl = mobileVideoUrl || videoUrl || '/bus.mp4';
   const [activeVidIndex, setActiveVidIndex] = useState(0); // 0 = Video A, 1 = Video B
 
   const desktopVidA = useRef<HTMLVideoElement | null>(null);
@@ -93,7 +101,7 @@ export const WindshieldCanvas: React.FC<WindshieldCanvasProps> = ({ isPlaying = 
     return () => {
       cancelAnimationFrame(rafId);
     };
-  }, [activeVidIndex, hasStarted]);
+  }, [activeVidIndex, hasStarted, videoUrl, resolvedMobileVideoUrl]);
 
   const getOpacity = (idx: number) => activeVidIndex === idx ? 'opacity-100' : 'opacity-0';
 
@@ -115,14 +123,14 @@ export const WindshieldCanvas: React.FC<WindshieldCanvasProps> = ({ isPlaying = 
         {/* DESKTOP / TABLET VIDEOS */}
         <video
           ref={desktopVidA}
-          src="/bus.mp4"
+          src={videoUrl}
           loop
           playsInline
           className={`absolute inset-0 hidden sm:block w-full h-full object-contain rounded-[28px] transition-opacity duration-1000 ease-in-out ${getOpacity(0)}`}
         />
         <video
           ref={desktopVidB}
-          src="/bus.mp4"
+          src={videoUrl}
           loop
           playsInline
           className={`absolute inset-0 hidden sm:block w-full h-full object-contain rounded-[28px] transition-opacity duration-1000 ease-in-out ${getOpacity(1)}`}
@@ -131,14 +139,14 @@ export const WindshieldCanvas: React.FC<WindshieldCanvasProps> = ({ isPlaying = 
         {/* MOBILE SPECIFIC VIDEOS */}
         <video
           ref={mobileVidA}
-          src="/bus.mp4"
+          src={resolvedMobileVideoUrl}
           loop
           playsInline
           className={`absolute inset-0 block sm:hidden w-full h-full object-cover rounded-none transition-opacity duration-1000 ease-in-out ${getOpacity(0)}`}
         />
         <video
           ref={mobileVidB}
-          src="/bus.mp4"
+          src={resolvedMobileVideoUrl}
           loop
           playsInline
           className={`absolute inset-0 block sm:hidden w-full h-full object-cover rounded-none transition-opacity duration-1000 ease-in-out ${getOpacity(1)}`}

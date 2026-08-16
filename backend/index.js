@@ -20,6 +20,7 @@ import requestRoutes from './routes/requestRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import healthRoutes from './routes/healthRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
+import videoRoutes from './routes/videoRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,6 +83,7 @@ app.use('/api', requestRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', healthRoutes);
 app.use('/api', statsRoutes);
+app.use('/api', videoRoutes);
 
 app.get('/health', getServerHealth);
 

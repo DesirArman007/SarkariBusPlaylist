@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Lock, Upload, Trash2, X, Music, Image as ImageIcon, CheckCircle, Disc, LogOut, Link as LinkIcon, MessageSquare, Radio } from 'lucide-react';
+import { ShieldCheck, Lock, Upload, Trash2, X, Music, Image as ImageIcon, CheckCircle, Disc, LogOut, Link as LinkIcon, MessageSquare, Radio, Video } from 'lucide-react';
 import type { Playlist, Track } from './CassettePlayer';
 import { API_BASE } from '../config/api';
 
@@ -9,6 +9,7 @@ interface AdminDashboardModalProps {
   playlists: Playlist[];
   onSongUploaded: (newTrack: Track, playlistId: string) => void;
   onSongDeleted?: (deletedTrackId: string) => void;
+  onVideoUpdated?: () => void;
 }
 
 export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
@@ -16,12 +17,13 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   onClose,
   playlists,
   onSongUploaded,
-  onSongDeleted
+  onSongDeleted,
+  onVideoUpdated
 }) => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminPasscode, setAdminPasscode] = useState('');
   const [adminKey, setAdminKey] = useState(''); // Persisted key for API calls after login
-  const [activeTab, setActiveTab] = useState<'upload' | 'manage' | 'requests'>('upload');
+  const [activeTab, setActiveTab] = useState<'upload' | 'manage' | 'requests' | 'video'>('upload');
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
 
   // Song Requests State
@@ -94,6 +96,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
       setIsAdminLoggedIn(true);
       setErrorMsg('');
       fetchAdminRequests(currentPasscode);
+      fetchCurrentVideo();
     } catch (err) {
       setErrorMsg((err as Error).message);
     }
@@ -268,6 +271,86 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     }
   };
 
+  // Bus Video Admin Management State
+  const [currentVideoInfo, setCurrentVideoInfo] = useState<{ id: string; title: string; videoUrl: string; mobileVideoUrl?: string } | null>(null);
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoUploadMode, setVideoUploadMode] = useState<'url' | 'file'>('url');
+  const [directVideoUrl, setDirectVideoUrl] = useState('');
+  const [directMobileVideoUrl, setDirectMobileVideoUrl] = useState('');
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [mobileVideoFile, setMobileVideoFile] = useState<File | null>(null);
+  const [isVideoUpdating, setIsVideoUpdating] = useState(false);
+
+  const fetchCurrentVideo = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/bus-video`);
+      const data = await res.json();
+      if (data && data.success && data.video) {
+        setCurrentVideoInfo(data.video);
+      }
+    } catch (err) {
+      console.error('Failed to fetch current bus video info:', err);
+    }
+  };
+
+  const handleVideoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (videoUploadMode === 'url' && !directVideoUrl.trim()) {
+      setErrorMsg('Please enter a Desktop Video URL!');
+      return;
+    }
+    if (videoUploadMode === 'file' && !videoFile) {
+      setErrorMsg('Please select a desktop video file!');
+      return;
+    }
+
+    setIsVideoUpdating(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const formData = new FormData();
+      formData.append('title', videoTitle.trim() || 'Highway Bus Video');
+      formData.append('makeActive', 'true');
+
+      if (videoUploadMode === 'file') {
+        if (videoFile) formData.append('videoFile', videoFile);
+        if (mobileVideoFile) formData.append('mobileVideoFile', mobileVideoFile);
+      } else {
+        formData.append('directVideoUrl', directVideoUrl.trim());
+        if (directMobileVideoUrl.trim()) {
+          formData.append('directMobileVideoUrl', directMobileVideoUrl.trim());
+        }
+      }
+
+      const res = await fetch(`${API_BASE}/api/admin/bus-video`, {
+        method: 'POST',
+        headers: {
+          'x-admin-key': adminKey
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update bus video');
+      }
+
+      setSuccessMsg('✅ Bus video updated in database successfully!');
+      fetchCurrentVideo();
+      onVideoUpdated?.();
+      setVideoFile(null);
+      setMobileVideoFile(null);
+      setDirectVideoUrl('');
+      setDirectMobileVideoUrl('');
+      setVideoTitle('');
+    } catch (err) {
+      setErrorMsg((err as Error).message);
+    } finally {
+      setIsVideoUpdating(false);
+    }
+  };
+
   const currentTracks = playlists[0]?.tracks || [];
 
   return (
@@ -398,6 +481,15 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     {songRequests.length > 9 ? '9+' : songRequests.length}
                   </span>
                 )}
+              </button>
+              <button
+                onClick={() => { setActiveTab('video'); setErrorMsg(''); setSuccessMsg(''); fetchCurrentVideo(); }}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                  activeTab === 'video' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Video className="w-3 h-3" />
+                <span>Bus Video</span>
               </button>
             </div>
 
@@ -687,6 +779,137 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     ))
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* TAB 4: BUS VIDEO SETTINGS (SERVED FROM DB) */}
+            {activeTab === 'video' && (
+              <div className="space-y-3.5 pt-1">
+                {/* Current Active Video Display */}
+                {currentVideoInfo && (
+                  <div className="bg-slate-950 border border-amber-500/30 rounded-xl p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-amber-400 font-mono flex items-center gap-1">
+                        <Video className="w-3 h-3 text-amber-400" /> Active Video in DB
+                      </span>
+                      <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-mono font-bold">
+                        Live in Neon DB
+                      </span>
+                    </div>
+                    <div className="text-xs font-semibold text-slate-100">{currentVideoInfo.title}</div>
+                    <div className="text-[10px] text-slate-400 font-mono truncate" title={currentVideoInfo.videoUrl}>
+                      Desktop URL: <span className="text-amber-300/90">{currentVideoInfo.videoUrl}</span>
+                    </div>
+                    {currentVideoInfo.mobileVideoUrl && (
+                      <div className="text-[10px] text-slate-400 font-mono truncate" title={currentVideoInfo.mobileVideoUrl}>
+                        Mobile URL: <span className="text-amber-300/90">{currentVideoInfo.mobileVideoUrl}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Video Update Form */}
+                <form onSubmit={handleVideoSubmit} className="space-y-3">
+                  <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 gap-1 mb-1">
+                    <button
+                      type="button"
+                      onClick={() => setVideoUploadMode('url')}
+                      className={`flex-1 py-1 rounded text-[11px] font-semibold flex items-center justify-center gap-1 transition-all ${
+                        videoUploadMode === 'url' ? 'bg-slate-800 text-amber-300 font-bold border border-slate-700' : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      <LinkIcon className="w-3 h-3" />
+                      <span>Direct Video URL</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVideoUploadMode('file')}
+                      className={`flex-1 py-1 rounded text-[11px] font-semibold flex items-center justify-center gap-1 transition-all ${
+                        videoUploadMode === 'file' ? 'bg-slate-800 text-amber-300 font-bold border border-slate-700' : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>Upload Video File</span>
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1 font-mono">
+                      Video Title / Label
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Scenic Mountain Highway Bus Drive"
+                      value={videoTitle}
+                      onChange={e => setVideoTitle(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none"
+                    />
+                  </div>
+
+                  {videoUploadMode === 'url' ? (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1 font-mono">
+                          Desktop Video URL <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="url"
+                          required
+                          placeholder="https://res.cloudinary.com/.../bus.mp4"
+                          value={directVideoUrl}
+                          onChange={e => setDirectVideoUrl(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1 font-mono">
+                          Mobile Video URL (Optional)
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://res.cloudinary.com/.../bus_mobile.mp4"
+                          value={directMobileVideoUrl}
+                          onChange={e => setDirectMobileVideoUrl(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none font-mono"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1 font-mono">
+                          Desktop Video File (.mp4, .webm) <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          onChange={e => setVideoFile(e.target.files?.[0] || null)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-slate-100 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/20 file:text-amber-300 cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1 font-mono">
+                          Mobile Video File (Optional)
+                        </label>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          onChange={e => setMobileVideoFile(e.target.files?.[0] || null)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-slate-100 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/20 file:text-amber-300 cursor-pointer"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isVideoUpdating}
+                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    <Video className="w-4 h-4 text-slate-950" />
+                    <span>{isVideoUpdating ? 'Saving to Database...' : 'Save & Set Active Bus Video'}</span>
+                  </button>
+                </form>
               </div>
             )}
 

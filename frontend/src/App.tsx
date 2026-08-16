@@ -111,6 +111,28 @@ export default function App() {
   // Song Requests modal state
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
+  // Bus Video state loaded from DB
+  const [busVideoUrl, setBusVideoUrl] = useState<string>('https://res.cloudinary.com/desirarman/video/upload/v1786854001/bus_playlist/videos/bus_desktop_default.mp4');
+  const [busMobileVideoUrl, setBusMobileVideoUrl] = useState<string>('https://res.cloudinary.com/desirarman/video/upload/v1786853987/bus_playlist/videos/bus_mobile_default.mp4');
+
+  const fetchBusVideo = () => {
+    fetch(`${API_BASE}/api/bus-video`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && data.video) {
+          if (data.video.videoUrl) {
+            setBusVideoUrl(resolveUploadUrl(data.video.videoUrl));
+          }
+          if (data.video.mobileVideoUrl) {
+            setBusMobileVideoUrl(resolveUploadUrl(data.video.mobileVideoUrl));
+          }
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch bus video config from DB, using fallback:", err);
+      });
+  };
+
   // Fetch backend API - parse songs from DB
   const fetchSongs = () => {
     fetch(`${API_BASE}/api/songs`)
@@ -153,6 +175,7 @@ export default function App() {
 
   useEffect(() => {
     fetchSongs();
+    fetchBusVideo();
   }, []);
 
   const handleRequestSubmitted = () => {
@@ -227,7 +250,12 @@ export default function App() {
     <div className="relative w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans select-none">
 
       {/* 1. WINDSHIELD HIGHWAY VIDEO BACKGROUND */}
-      <WindshieldCanvas isPlaying={isPlaying} hasStarted={hasStarted} />
+      <WindshieldCanvas
+        isPlaying={isPlaying}
+        hasStarted={hasStarted}
+        videoUrl={busVideoUrl}
+        mobileVideoUrl={busMobileVideoUrl}
+      />
 
       {/* 2. TOP CENTER FIRST INTERACTION PROMPT FOR BROWSER AUTOPLAY */}
       {!hasStarted && (
@@ -329,6 +357,7 @@ export default function App() {
         playlists={playlists}
         onSongUploaded={handleSongUploaded}
         onSongDeleted={handleSongDeleted}
+        onVideoUpdated={fetchBusVideo}
       />
     </div>
   );

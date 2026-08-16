@@ -13,6 +13,7 @@ if (!fs.existsSync(uploadsDir)) {
 
 const ALLOWED_AUDIO_EXTENSIONS = /\.(mp3|wav|ogg|flac|aac|m4a|wma)$/i;
 const ALLOWED_IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i;
+const ALLOWED_VIDEO_EXTENSIONS = /\.(mp4|webm|mov|mkv|avi)$/i;
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -21,14 +22,17 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
-    const prefix = file.fieldname === 'coverFile' ? 'cover' : 'audio';
+    let prefix = 'file';
+    if (file.fieldname === 'coverFile') prefix = 'cover';
+    else if (file.fieldname === 'songFile') prefix = 'audio';
+    else if (file.fieldname.includes('video') || file.fieldname.includes('Video')) prefix = 'video';
     cb(null, `${prefix}-${uniqueSuffix}${ext}`);
   }
 });
 
 export const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (file.fieldname === 'songFile' && ALLOWED_AUDIO_EXTENSIONS.test(ext)) {
@@ -37,6 +41,9 @@ export const upload = multer({
     if (file.fieldname === 'coverFile' && ALLOWED_IMAGE_EXTENSIONS.test(ext)) {
       return cb(null, true);
     }
-    cb(new Error(`Invalid file type: ${ext}. Only audio (mp3, wav, ogg, flac, aac, m4a) and image (jpg, png, webp, gif) files are allowed.`));
+    if ((file.fieldname === 'videoFile' || file.fieldname === 'mobileVideoFile') && ALLOWED_VIDEO_EXTENSIONS.test(ext)) {
+      return cb(null, true);
+    }
+    cb(new Error(`Invalid file type: ${ext}. Supported formats: audio (mp3, wav, etc.), image (jpg, png, webp, etc.), video (mp4, webm, mov).`));
   }
 });

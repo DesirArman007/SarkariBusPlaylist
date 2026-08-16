@@ -84,6 +84,29 @@ async function initDatabase() {
       ON CONFLICT (id) DO NOTHING;
     `;
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS bus_videos (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        video_url TEXT NOT NULL,
+        mobile_video_url TEXT,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    await sql`
+      INSERT INTO bus_videos (id, title, video_url, mobile_video_url, is_active)
+      VALUES (
+        'default-bus-video',
+        'Standard Indian Highway Bus View',
+        'https://res.cloudinary.com/desirarman/video/upload/v1786854001/bus_playlist/videos/bus_desktop_default.mp4',
+        'https://res.cloudinary.com/desirarman/video/upload/v1786853987/bus_playlist/videos/bus_mobile_default.mp4',
+        true
+      )
+      ON CONFLICT (id) DO NOTHING;
+    `;
+
     console.log("Neon PostgreSQL database schema verified!");
   } catch (err) {
     console.error("Error initializing database schema:", err);
